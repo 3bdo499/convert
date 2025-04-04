@@ -1,0 +1,68 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
+    $uploadDir = "uploads/";
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+    $originalFile = $_FILES['file']['tmp_name'];
+    $newFileName = $uploadDir . "rom.bin"; // حفظ الملف باسم rom.bin
+
+    if (move_uploaded_file($originalFile, $newFileName)) {
+        echo "<script>document.getElementById('download-link').href='$newFileName';
+              document.getElementById('download-link').style.display='block';
+              document.getElementById('progress-container').style.display='none';</script>";
+    } else {
+        echo "<script>alert('حدث خطأ أثناء رفع الملف.');</script>";
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تحويل الملفات إلى rom.bin</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #progress-container { display: none; width: 100%; background: #f3f3f3; border-radius: 5px; }
+        #progress-bar { width: 0%; height: 20px; background: green; border-radius: 5px; }
+        #download-link { display: none; margin-top: 20px; }
+    </style>
+    <script>
+        function uploadFile(event) {
+            event.preventDefault();
+            let form = document.getElementById('upload-form');
+            let formData = new FormData(form);
+            let xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener("progress", function(event) {
+                if (event.lengthComputable) {
+                    let percent = (event.loaded / event.total) * 100;
+                    document.getElementById('progress-bar').style.width = percent + "%";
+                }
+            });
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    document.getElementById('response').innerHTML = xhr.responseText;
+                }
+            };
+
+            document.getElementById('progress-container').style.display = 'block';
+            xhr.open("POST", "", true);
+            xhr.send(formData);
+        }
+    </script>
+</head>
+<body>
+    <h2>رفع ملف وتحويله إلى rom.bin</h2>
+    <form id="upload-form" method="post" enctype="multipart/form-data" onsubmit="uploadFile(event)">
+        <input type="file" name="file" required>
+        <button type="submit">رفع وتحويل</button>
+    </form>
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+    <div id="response"></div>
+    <a id="download-link" href="#" download>تحميل rom.bin</a>
+</body>
+</html>
